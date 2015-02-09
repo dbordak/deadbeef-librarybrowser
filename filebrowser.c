@@ -828,7 +828,7 @@ create_sidebar (void)
     g_signal_connect (treeview,     "button-press-event",   G_CALLBACK (on_treeview_mouseclick_press),      selection);
     g_signal_connect (treeview,     "button-release-event", G_CALLBACK (on_treeview_mouseclick_release),    selection);
     g_signal_connect (treeview,     "motion-notify-event",  G_CALLBACK (on_treeview_mousemove),             NULL);
-    //g_signal_connect (treeview,     "row-activated",        G_CALLBACK (on_treeview_row_activated),         NULL);
+    g_signal_connect (treeview,     "row-activated",        G_CALLBACK (on_treeview_row_activated),         selection);
     g_signal_connect (treeview,     "row-collapsed",        G_CALLBACK (on_treeview_row_collapsed),         NULL);
     g_signal_connect (treeview,     "row-expanded",         G_CALLBACK (on_treeview_row_expanded),          NULL);
 
@@ -1669,13 +1669,15 @@ on_treeview_mousemove (GtkWidget *widget, GdkEventButton *event)
     return TRUE;
 }
 
-/*
 static void
 on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
-                GtkTreeViewColumn *column, gpointer user_data)
+                           GtkTreeViewColumn *column, gpointer user_data, GtkTreeSelection *selection)
 {
     GtkTreeIter     iter;
     gchar           *uri;
+
+    if (path == NULL)
+        return;
 
     gtk_tree_model_get_iter (GTK_TREE_MODEL (treestore), &iter, path);
     gtk_tree_model_get (GTK_TREE_MODEL (treestore), &iter,
@@ -1685,19 +1687,25 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
         return;
 
     if (g_file_test (uri, G_FILE_TEST_IS_DIR)) {
-        if (CONFIG_CHROOT_ON_DCLICK)
-            treebrowser_chroot (uri);
-        else {
-            if (gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), path))
-                gtk_tree_view_collapse_row (GTK_TREE_VIEW (widget), path);
-            else
-                gtk_tree_view_expand_row (GTK_TREE_VIEW (widget), path, FALSE);
-        }
-    }
+        // toggle expand/collapse
+        if (gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path))
+            gtk_tree_view_collapse_row (GTK_TREE_VIEW (treeview), path);
+        else
+            gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
+        gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
+    } else {
+        //GList *rows, *uri_list;
+        GList *uri_list = g_list_alloc ();
+        //rows = gtk_tree_selection_get_selected_rows (selection, NULL);
+        //g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
+        //g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
+        //g_list_free (rows);
+        uri_list = g_list_append (uri_list, uri);
 
-    g_free(uri);
+        add_uri_to_playlist (uri_list, PLT_CURRENT);
+    }
 }
-*/
+
 static void
 on_treeview_row_expanded (GtkWidget *widget, GtkTreeIter *iter,
                 GtkTreePath *path, gpointer user_data)

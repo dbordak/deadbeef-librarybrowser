@@ -1481,7 +1481,6 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
 
     gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
     gboolean is_selected = path ? gtk_tree_selection_path_is_selected (selection, path) : FALSE;
-    /* gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE; */
 
     if (event->button == 1)
     {
@@ -1689,13 +1688,15 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
             gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
         gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
     } else {
-        //GList *rows, *uri_list;
-        GList *uri_list = g_list_alloc ();
-        //rows = gtk_tree_selection_get_selected_rows (selection, NULL);
-        //g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
-        //g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
-        //g_list_free (rows);
-        uri_list = g_list_append (uri_list, uri);
+        GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+        GList *rows, *uri_list;
+        uri_list = g_list_alloc ();
+        rows = gtk_tree_selection_get_selected_rows (selection, NULL);
+
+        g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
+        g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
+        g_list_free (rows);
+        //uri_list = g_list_append (uri_list, uri);
 
         add_uri_to_playlist (uri_list, PLT_CURRENT);
     }

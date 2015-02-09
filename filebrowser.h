@@ -139,7 +139,7 @@ static gboolean     on_treeview_mouseclick_release (GtkWidget *widget, GdkEventB
                             GtkTreeSelection *selection);
 static gboolean     on_treeview_mousemove (GtkWidget *widget, GdkEventButton *event);
 static void         on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
-                            GtkTreeViewColumn *column, gpointer user_data, GtkTreeSelection *selection);
+                            GtkTreeViewColumn *column, gpointer user_data);
 static void         on_treeview_row_expanded (GtkWidget *widget, GtkTreeIter *iter,
                         GtkTreePath *path, gpointer user_data);
 static void         on_treeview_row_collapsed (GtkWidget *widget, GtkTreeIter *iter,

@@ -1481,7 +1481,7 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
 
     gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
     gboolean is_selected = path ? gtk_tree_selection_path_is_selected (selection, path) : FALSE;
-    gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE;
+    /* gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE; */
 
     if (event->button == 1)
     {
@@ -1491,15 +1491,10 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
             return TRUE;
         }
 
+        // Double Clicks should work the same as Return
         if (event->type == GDK_2BUTTON_PRESS)
-        {
-            // toggle expand/collapse
-            if (is_expanded)
-                gtk_tree_view_collapse_row (GTK_TREE_VIEW (treeview), path);
-            else
-                gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
-            gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
-        }
+            on_treeview_row_activated(widget, path, column, NULL);
+
         else if (event->type == GDK_BUTTON_PRESS)
         {
             mouseclick_dragwait = TRUE;
@@ -1671,7 +1666,7 @@ on_treeview_mousemove (GtkWidget *widget, GdkEventButton *event)
 
 static void
 on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
-                           GtkTreeViewColumn *column, gpointer user_data, GtkTreeSelection *selection)
+                           GtkTreeViewColumn *column, gpointer user_data)
 {
     GtkTreeIter     iter;
     gchar           *uri;
@@ -1682,13 +1677,13 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
     gtk_tree_model_get_iter (GTK_TREE_MODEL (treestore), &iter, path);
     gtk_tree_model_get (GTK_TREE_MODEL (treestore), &iter,
                     TREEBROWSER_COLUMN_URI, &uri, -1);
-
+    gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE;
     if (uri == NULL)
         return;
 
     if (g_file_test (uri, G_FILE_TEST_IS_DIR)) {
         // toggle expand/collapse
-        if (gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path))
+        if (is_expanded)
             gtk_tree_view_collapse_row (GTK_TREE_VIEW (treeview), path);
         else
             gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);

@@ -106,14 +106,15 @@ utils_get_file_list_full (const gchar *path, gboolean full_path, gboolean sort, 
 }
 
 GSList *
-utils_get_file_list (const gchar *path, guint *length, GError **error)
+utils_get_file_list (const gchar *path, guint *length, gboolean sort, GError **error)
 {
-    GSList *list = utils_get_file_list_full (path, FALSE, TRUE, error);
+    GSList *list = utils_get_file_list_full (path, FALSE, sort, error);
 
     if (length)
         *length = g_slist_length (list);
     return list;
 }
+
 
 /* Convert text in local encoding to UTF8 */
 gchar *

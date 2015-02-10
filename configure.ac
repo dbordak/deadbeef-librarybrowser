@@ -30,9 +30,15 @@ test "x$PREFIX" = xNONE && PREFIX=$ac_default_prefix
 
 AC_DEFINE_UNQUOTED(LOCALEDIR, "${PREFIX}/${DATADIRNAME}/locale", [Name of gettext locale directory])
 
+AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug], [enable debug options (default: disabled)])], [enable_debug=$enableval], [enable_debug=no])
 AC_ARG_ENABLE(staticlink, [AS_HELP_STRING([--enable-staticlink], [link everything statically (default: disabled)])], [enable_staticlink=$enableval], [enable_staticlink=no])
-AC_ARG_ENABLE(gtk3,     [AS_HELP_STRING([--enable-gtk3     ], [build GTK3 version of gtkui plugin (default: disabled)])], [enable_gtk3=$enableval], [enable_gtk3=no])
+AC_ARG_ENABLE(gtk3,     [AS_HELP_STRING([--disable-gtk3     ], [build GTK3 version of gtkui plugin (default: enabled)])], [enable_gtk3=$enableval], [enable_gtk3=yes])
 AC_ARG_ENABLE(gtk2,     [AS_HELP_STRING([--disable-gtk2     ], [build GTK2 version of gtkui plugin (default: enabled)])], [enable_gtk2=$enableval], [enable_gtk2=yes])
+
+if test "x$enable_debug" != "xno" ; then
+    AC_DEFINE_UNQUOTED([DEBUG], [1], [Define if building debug version])
+    DEBUG=yes
+fi
 
 if test "x$enable_staticlink" != "xno" ; then
     AC_DEFINE_UNQUOTED([STATICLINK], [1], [Define if building static version])
@@ -51,6 +57,7 @@ else
     HAVE_GTK2=no
 fi
 
+AM_CONDITIONAL(DEBUG, test "x$DEBUG" = "xyes")
 AM_CONDITIONAL(STATICLINK, test "x$STATICLINK" = "xyes")
 AM_CONDITIONAL(HAVE_GTK3, test "x$HAVE_GTK3" = "xyes")
 AM_CONDITIONAL(HAVE_GTK2, test "x$HAVE_GTK2" = "xyes")

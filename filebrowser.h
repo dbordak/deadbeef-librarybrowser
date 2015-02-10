@@ -2,7 +2,7 @@
     Filebrowser plugin for the DeaDBeeF audio player
     http://sourceforge.net/projects/deadbeef-fb/
 
-    Copyright (C) 2011 Jan D. Behrens <zykure@web.de>
+    Copyright (C) 2011-2014 Jan D. Behrens <zykure@web.de>
 
     Based on Geany treebrowser plugin:
         treebrowser.c - v0.20
@@ -36,6 +36,7 @@
 #define     CONFSTR_FB_FILTER               "filebrowser.filter"
 #define     CONFSTR_FB_FILTER_AUTO          "filebrowser.autofilter"
 #define     CONFSTR_FB_SHOW_BOOKMARKS       "filebrowser.showbookmarks"
+#define     CONFSTR_FB_BOOKMARKS_FILE       "filebrowser.bookmarks_file"
 #define     CONFSTR_FB_SHOW_ICONS           "filebrowser.showicons"
 #define     CONFSTR_FB_SHOW_TREE_LINES      "filebrowser.treelines"
 #define     CONFSTR_FB_WIDTH                "filebrowser.sidebar_width"
@@ -50,10 +51,16 @@
 #define     CONFSTR_FB_COLOR_FG             "filebrowser.fgcolor"
 #define     CONFSTR_FB_FONT_SIZE            "filebrowser.font_size"
 #define     CONFSTR_FB_ICON_SIZE            "filebrowser.icon_size"
+#define     CONFSTR_FB_SORT_TREEVIEW        "filebrowser.sort_treeview"
 
 #define     DEFAULT_FB_DEFAULT_PATH         ""
 #define     DEFAULT_FB_FILTER               ""  // auto-filter enabled by default
 #define     DEFAULT_FB_COVERART             "cover.jpg;folder.jpg;front.jpg"
+#if !GTK_CHECK_VERSION(3,0,0)
+#define     DEFAULT_FB_BOOKMARKS_FILE       "$HOME/.gtk-bookmarks"
+#else
+#define     DEFAULT_FB_BOOKMARKS_FILE       "$HOME/.config/gtk-3.0/bookmarks"
+#endif
 
 
 /* Treebrowser setup */
@@ -69,7 +76,8 @@ enum
     TREEBROWSER_RENDER_ICON             = 0,
     TREEBROWSER_RENDER_TEXT             = 1,
 
-    TREEBROWSER_FLAGS_SEPARATOR         = -1
+    TREEBROWSER_FLAGS_SEPARATOR         = -1,
+    TREEBROWSER_FLAGS_BOOKMARK          = -2
 };
 
 
@@ -105,6 +113,7 @@ static void         create_sidebar (void);
 
 static void         gtk_tree_store_iter_clear_nodes (gpointer iter, gboolean delete_root);
 //static void         add_single_uri_to_playlist (gchar *uri, int plt);
+static void         add_uri_to_playlist_worker (void *data);
 static void         add_uri_to_playlist (GList *uri_list, int plt);
 static gboolean     check_filtered (const gchar *base_name);
 static gboolean     check_hidden (const gchar *filename);
@@ -121,6 +130,8 @@ static gboolean     treeview_separator_func (GtkTreeModel *model, GtkTreeIter *i
                             gpointer data);
 static void         treebrowser_chroot(gchar *directory);
 static gboolean     treebrowser_browse (gchar *directory, gpointer parent);
+static void         treebrowser_bookmarks_set_state (void);
+static void         treebrowser_load_bookmarks (void);
 
 static void         on_menu_add (GtkMenuItem *menuitem, GList *uri_list);
 static void         on_menu_add_current (GtkMenuItem *menuitem, GList *uri_list);
@@ -130,6 +141,8 @@ static void         on_menu_expand_one(GtkMenuItem *menuitem, gpointer *user_dat
 static void         on_menu_expand_all(GtkMenuItem *menuitem, gpointer *user_data);
 static void         on_menu_collapse_all(GtkMenuItem *menuitem, gpointer *user_data);
 static void         on_menu_copy_uri(GtkMenuItem *menuitem, GList *uri_list);
+static void         on_menu_sort_treeview (GtkMenuItem *menuitem, gpointer *user_data);
+static void         on_menu_show_bookmarks (GtkMenuItem *menuitem, gpointer *user_data);
 static void         on_menu_show_hidden_files(GtkMenuItem *menuitem, gpointer *user_data);
 static void         on_menu_use_filter(GtkMenuItem *menuitem, gpointer *user_data);
 

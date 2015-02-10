@@ -25,6 +25,7 @@ todo.txt
 test
 .deps
 install-sh
+compile
 missing
 libtool
 ltmain.sh

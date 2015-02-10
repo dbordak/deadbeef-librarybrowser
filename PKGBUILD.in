@@ -1,0 +1,28 @@
+# Author: Jan D. Behrens <zykure@web.de>
+# Maintainer: Jan D. Behrens <zykure@web.de>
+
+pkgname=@PACKAGENAME@@PACKAGEFLAG@
+pkgver=@PACKAGEVER@
+pkgrel=@PACKAGEREL@
+pkgdesc="A filebrowser plugin for the DeaDBeeF audio player"
+arch=('any')
+url="http://sourceforge.net/projects/deadbeef-fb/"
+license=(GPL)
+depends=('deadbeef>=0.6', @PACKAGEDEPS@)
+backup=()
+source=(http://downloads.sourceforge.net/project/deadbeef-fb/master/@SOURCENAME@_src.tar.gz)
+md5sums=('@MD5SUM@')
+sha1sums=('@SHA1SUM@')
+
+build() {
+  cd $srcdir/deadbeef-fb-devel
+  ./configure --prefix=/usr @PACKAGECONFIG@
+  make
+}
+
+package() {
+  cd $srcdir/deadbeef-fb-devel
+  make DESTDIR="$pkgdir" install
+}
+
+# vim:set ts=2 sw=2 et:

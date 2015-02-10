@@ -22,7 +22,7 @@ GSList *
 utils_get_file_list_full (const gchar *path, gboolean full_path, gboolean sort, GError **error);
 
 GSList *
-utils_get_file_list (const gchar *path, guint *length, GError **error);
+utils_get_file_list (const gchar *path, guint *length, gboolean sort, GError **error);
 
 gchar *
 utils_get_utf8_from_locale(const gchar *locale_text);

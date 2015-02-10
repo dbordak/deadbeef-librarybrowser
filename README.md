@@ -1,6 +1,9 @@
 # DeaDBeeF Library Browser
 
 Music library plugin for DeadDBeeF based off of the [Filebrowser plugin](http://sourceforge.net/projects/deadbeef-fb/) by [Jan D. Behrens](mailto:zykure@web.de).
+This fork fixes keyboard support for the plugin -- you can add music and collapse/expand folders without the mouse!
+Additionally, the context menu is properly supported with the Menu Button and Shift+F10.
+This fork integrates the changes from [Jesse Farebrother](https://github.com/JesseFarebro/deadbeef-librarybrowser) which simplify the display.
 
 Thanks to [Alexey Yakovenko](https://github.com/Alexey-Yakovenko) for the awesome music player that is [DeaDBeeF](http://deadbeef.sourceforge.net/).
 
@@ -25,6 +28,7 @@ make
     DeaDBeeF Library Browser
     Copyright (C) 2011  Jan D. Behrens <zykure@web.de>
     Copyright (C) 2014  Jesse Farebrother <jessefarebro@gmail.com>
+    Copyright (C) 2015  Daniel Bordak <dbordak@fastmail.fm>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

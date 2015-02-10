@@ -33,6 +33,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
@@ -94,9 +95,6 @@ static GtkCellRenderer *    render_icon, *render_text;
 static GSList *             expanded_rows               = NULL;
 static gchar *              known_extensions            = NULL;
 static gboolean             flag_on_expand_refresh      = FALSE;
-
-static gint                 mouseclick_lastpos[2]       = { 0, 0 };
-static gboolean             mouseclick_dragwait         = FALSE;
 
 
 /* Helper functions */
@@ -824,10 +822,11 @@ create_sidebar (void)
     gtk_box_pack_start (GTK_BOX (sidebar_vbox), sidebar_vbox_bars, FALSE, TRUE, 1);
     gtk_box_pack_start (GTK_BOX (sidebar_vbox), scrollwin, TRUE, TRUE, 1);
 
-    g_signal_connect (treeview,     "button-press-event",   G_CALLBACK (on_treeview_mouseclick_press),      selection);
-    g_signal_connect (treeview,     "row-activated",        G_CALLBACK (on_treeview_row_activated),         selection);
-    g_signal_connect (treeview,     "row-collapsed",        G_CALLBACK (on_treeview_row_collapsed),         NULL);
-    g_signal_connect (treeview,     "row-expanded",         G_CALLBACK (on_treeview_row_expanded),          NULL);
+    g_signal_connect (treeview, "button-press-event", G_CALLBACK (on_treeview_mouseclick_press), selection);
+    g_signal_connect (treeview, "key-release-event", G_CALLBACK (on_treeview_key_release),        selection);
+    g_signal_connect (treeview, "row-activated",      G_CALLBACK (on_treeview_row_activated),    selection);
+    g_signal_connect (treeview, "row-collapsed",      G_CALLBACK (on_treeview_row_collapsed),    NULL);
+    g_signal_connect (treeview, "row-expanded",       G_CALLBACK (on_treeview_row_expanded),     NULL);
 
     gtk_widget_show_all (sidebar_vbox);
 }
@@ -1460,6 +1459,27 @@ get_uris_from_selection (gpointer data, gpointer userdata)
 }
 
 static gboolean
+on_treeview_key_release (GtkWidget *widget, GdkEventKey *event,
+                GtkTreeSelection *selection) {
+    GtkTreePath         *path;
+    GtkTreeViewColumn   *column;
+    gtk_tree_view_get_cursor (GTK_TREE_VIEW (treeview), &path, &column);
+
+    // Right-arrow should be able to expand folders
+    if (event->keyval == GDK_KEY_Right)
+    {
+        gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
+        return TRUE;
+    }
+    if (event->keyval == GDK_KEY_Left)
+    {
+        gtk_tree_view_collapse_row (GTK_TREE_VIEW (treeview), path);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean
 on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                 GtkTreeSelection *selection)
 {
@@ -1472,13 +1492,9 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
     gtk_tree_view_get_path_at_pos (GTK_TREE_VIEW (treeview), event->x, event->y,
                     &path, &column, NULL, NULL);
 
-    mouseclick_lastpos[0] = event->x;
-    mouseclick_lastpos[1] = event->y;
-    mouseclick_dragwait = FALSE;
-
     gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
     gboolean is_selected = path ? gtk_tree_selection_path_is_selected (selection, path) : FALSE;
-	if (event->button == 2)
+    if (event->button == 2)
     {
         if (event->type == GDK_BUTTON_PRESS)
         {
@@ -1506,6 +1522,8 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                 add_uri_to_playlist (uri_list, PLT_NEW);
             }
         }
+
+        return TRUE;
     }
     else if (event->button == 3)
     {
@@ -1529,7 +1547,7 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
             gtk_menu_popup (GTK_MENU (create_popup_menu (path, "", uri_list)),
                             NULL, NULL, NULL, NULL, event->button, event->time);
         }
-		return TRUE;
+        return TRUE;
     }
 
     return FALSE;
@@ -1551,6 +1569,8 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
     if (uri == NULL)
         return;
 
+    /*
+    // This section would make Activate toggle directories rather than adding them.
     if (g_file_test (uri, G_FILE_TEST_IS_DIR)) {
         gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE;
         // toggle expand/collapse
@@ -1560,16 +1580,16 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
             gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
         gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
     } else {
-        GList *rows, *uri_list;
-        uri_list = g_list_alloc ();
-        rows = gtk_tree_selection_get_selected_rows (selection, NULL);
+    */
+    GList *rows, *uri_list;
+    uri_list = g_list_alloc ();
+    rows = gtk_tree_selection_get_selected_rows (selection, NULL);
 
-        g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
-        g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
-        g_list_free (rows);
+    g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
+    g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
+    g_list_free (rows);
 
-        add_uri_to_playlist (uri_list, PLT_CURRENT);
-    }
+    add_uri_to_playlist (uri_list, PLT_CURRENT);
 }
 
 static void

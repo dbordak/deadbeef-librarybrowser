@@ -97,7 +97,6 @@ static gboolean             flag_on_expand_refresh      = FALSE;
 
 static gint                 mouseclick_lastpos[2]       = { 0, 0 };
 static gboolean             mouseclick_dragwait         = FALSE;
-static GtkTreePath *        mouseclick_lastpath         = NULL;
 
 
 /* Helper functions */
@@ -826,8 +825,6 @@ create_sidebar (void)
     gtk_box_pack_start (GTK_BOX (sidebar_vbox), scrollwin, TRUE, TRUE, 1);
 
     g_signal_connect (treeview,     "button-press-event",   G_CALLBACK (on_treeview_mouseclick_press),      selection);
-    g_signal_connect (treeview,     "button-release-event", G_CALLBACK (on_treeview_mouseclick_release),    selection);
-    g_signal_connect (treeview,     "motion-notify-event",  G_CALLBACK (on_treeview_mousemove),             NULL);
     g_signal_connect (treeview,     "row-activated",        G_CALLBACK (on_treeview_row_activated),         selection);
     g_signal_connect (treeview,     "row-collapsed",        G_CALLBACK (on_treeview_row_collapsed),         NULL);
     g_signal_connect (treeview,     "row-expanded",         G_CALLBACK (on_treeview_row_expanded),          NULL);
@@ -1481,55 +1478,7 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
 
     gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
     gboolean is_selected = path ? gtk_tree_selection_path_is_selected (selection, path) : FALSE;
-
-    if (event->button == 1)
-    {
-        if (! path)
-        {
-            gtk_tree_selection_unselect_all (selection);
-            return TRUE;
-        }
-
-        // Double Clicks should work the same as Return
-        if (event->type == GDK_2BUTTON_PRESS)
-            on_treeview_row_activated(widget, path, column, NULL);
-
-        else if (event->type == GDK_BUTTON_PRESS)
-        {
-            mouseclick_dragwait = TRUE;
-            if (! (event->state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)))
-            {
-                if (selected_rows <= 1 || ! is_selected)
-                {
-                    // select row
-                    gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
-                }
-            }
-            else if (event->state & GDK_SHIFT_MASK)
-            {
-                // add to selection - FIXME: allow unselecting too
-                if (mouseclick_lastpath != NULL)
-                {
-                    gint depth = gtk_tree_path_get_depth (path);
-                    gint last_depth = gtk_tree_path_get_depth (mouseclick_lastpath);
-                    if (depth == last_depth)
-                    {
-                        // FIXME: selecting over different depths leads to segfault!
-                        gtk_tree_selection_select_range (selection, mouseclick_lastpath, path);
-                    }
-                }
-            }
-            else if (event->state & GDK_CONTROL_MASK)
-            {
-                // toggle selection
-                if (is_selected)
-                    gtk_tree_selection_unselect_path (selection, path);
-                else
-                    gtk_tree_selection_select_path (selection, path);
-            }
-        }
-    }
-    else if (event->button == 2)
+	if (event->button == 2)
     {
         if (event->type == GDK_BUTTON_PRESS)
         {
@@ -1580,92 +1529,15 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
             gtk_menu_popup (GTK_MENU (create_popup_menu (path, "", uri_list)),
                             NULL, NULL, NULL, NULL, event->button, event->time);
         }
+		return TRUE;
     }
 
-    return TRUE;
-}
-
-static gboolean
-on_treeview_mouseclick_release (GtkWidget *widget, GdkEventButton *event,
-                GtkTreeSelection *selection)
-{
-    if (gtkui_plugin->w_get_design_mode ()) {
-        return FALSE;
-    }
-
-    GtkTreePath         *path;
-    GtkTreeViewColumn   *column;
-    gtk_tree_view_get_path_at_pos (GTK_TREE_VIEW (treeview), event->x, event->y,
-                    &path, &column, NULL, NULL);
-
-    //gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
-
-    if (event->button == 1)
-    {
-        if (! path)
-        {
-            mouseclick_lastpath = NULL;
-            gtk_tree_selection_unselect_all (selection);
-            return TRUE;
-        }
-
-        if (mouseclick_dragwait)
-        {
-            mouseclick_lastpath = path;
-            mouseclick_dragwait = FALSE;
-            if (! (event->state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)))
-            {
-                // select row (abort drag)
-                gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
-            }
-        }
-        /*
-        else if (mouseclick_areaselect)
-        {
-        }
-        */
-    }
-
-    return TRUE;
-}
-
-static gboolean
-on_treeview_mousemove (GtkWidget *widget, GdkEventButton *event)
-{
-    if (gtkui_plugin->w_get_design_mode ()) {
-        return FALSE;
-    }
-
-    if (mouseclick_dragwait)
-    {
-        if (gtk_drag_check_threshold (widget, mouseclick_lastpos[0], event->x, mouseclick_lastpos[1], event->y))
-        {
-            mouseclick_dragwait = FALSE;
-            GtkTargetEntry entry = {
-                .target = "text/uri-list",
-                .flags = GTK_TARGET_SAME_APP,
-                .info = 0
-            };
-            GtkTargetList *target = gtk_target_list_new (&entry, 1);
-#if !GTK_CHECK_VERSION(3,0,0)
-            gtk_drag_begin (widget, target, GDK_ACTION_COPY | GDK_ACTION_MOVE, 1, (GdkEvent *)event);
-#else
-            gtk_drag_begin_with_coordinates (widget, target, GDK_ACTION_COPY | GDK_ACTION_MOVE, 1, (GdkEvent *)event, -1, -1);
-#endif
-        }
-    }
-    /*
-    else if (mouseclick_areaselect)
-    {
-    }
-    */
-
-    return TRUE;
+    return FALSE;
 }
 
 static void
 on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
-                           GtkTreeViewColumn *column, gpointer user_data)
+                           GtkTreeViewColumn *column, GtkTreeSelection *selection)
 {
     GtkTreeIter     iter;
     gchar           *uri;
@@ -1674,13 +1546,13 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
         return;
 
     gtk_tree_model_get_iter (GTK_TREE_MODEL (treestore), &iter, path);
-    gtk_tree_model_get (GTK_TREE_MODEL (treestore), &iter,
-                    TREEBROWSER_COLUMN_URI, &uri, -1);
-    gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE;
+    gtk_tree_model_get (GTK_TREE_MODEL (treestore), &iter, TREEBROWSER_COLUMN_URI, &uri, -1);
+
     if (uri == NULL)
         return;
 
     if (g_file_test (uri, G_FILE_TEST_IS_DIR)) {
+        gboolean is_expanded = path ? gtk_tree_view_row_expanded (GTK_TREE_VIEW (treeview), path) : FALSE;
         // toggle expand/collapse
         if (is_expanded)
             gtk_tree_view_collapse_row (GTK_TREE_VIEW (treeview), path);
@@ -1688,7 +1560,6 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
             gtk_tree_view_expand_row (GTK_TREE_VIEW (treeview), path, FALSE);
         gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
     } else {
-        GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
         GList *rows, *uri_list;
         uri_list = g_list_alloc ();
         rows = gtk_tree_selection_get_selected_rows (selection, NULL);
@@ -1696,7 +1567,6 @@ on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
         g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
         g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
         g_list_free (rows);
-        //uri_list = g_list_append (uri_list, uri);
 
         add_uri_to_playlist (uri_list, PLT_CURRENT);
     }

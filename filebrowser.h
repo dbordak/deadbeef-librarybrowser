@@ -135,11 +135,8 @@ static void         on_menu_use_filter(GtkMenuItem *menuitem, gpointer *user_dat
 
 static gboolean     on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                             GtkTreeSelection *selection);
-static gboolean     on_treeview_mouseclick_release (GtkWidget *widget, GdkEventButton *event,
-                            GtkTreeSelection *selection);
-static gboolean     on_treeview_mousemove (GtkWidget *widget, GdkEventButton *event);
 static void         on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
-                            GtkTreeViewColumn *column, gpointer user_data);
+                            GtkTreeViewColumn *column, GtkTreeSelection *selection);
 static void         on_treeview_row_expanded (GtkWidget *widget, GtkTreeIter *iter,
                         GtkTreePath *path, gpointer user_data);
 static void         on_treeview_row_collapsed (GtkWidget *widget, GtkTreeIter *iter,

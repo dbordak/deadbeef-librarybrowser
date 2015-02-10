@@ -135,6 +135,8 @@ static void         on_menu_use_filter(GtkMenuItem *menuitem, gpointer *user_dat
 
 static gboolean     on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                             GtkTreeSelection *selection);
+static gboolean     on_treeview_key_press (GtkWidget *widget, GdkEventKey *event,
+                            GtkTreeSelection *selection);
 static gboolean     on_treeview_key_release (GtkWidget *widget, GdkEventKey *event,
                             GtkTreeSelection *selection);
 static void         on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,

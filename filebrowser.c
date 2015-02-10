@@ -823,7 +823,8 @@ create_sidebar (void)
     gtk_box_pack_start (GTK_BOX (sidebar_vbox), scrollwin, TRUE, TRUE, 1);
 
     g_signal_connect (treeview, "button-press-event", G_CALLBACK (on_treeview_mouseclick_press), selection);
-    g_signal_connect (treeview, "key-release-event", G_CALLBACK (on_treeview_key_release),        selection);
+    g_signal_connect (treeview, "key-press-event",    G_CALLBACK (on_treeview_key_press),        selection);
+    g_signal_connect (treeview, "key-release-event",  G_CALLBACK (on_treeview_key_release),      selection);
     g_signal_connect (treeview, "row-activated",      G_CALLBACK (on_treeview_row_activated),    selection);
     g_signal_connect (treeview, "row-collapsed",      G_CALLBACK (on_treeview_row_collapsed),    NULL);
     g_signal_connect (treeview, "row-expanded",       G_CALLBACK (on_treeview_row_expanded),     NULL);
@@ -1456,6 +1457,20 @@ get_uris_from_selection (gpointer data, gpointer userdata)
                     TREEBROWSER_COLUMN_URI, &uri, -1);
     uri_list = g_list_append (uri_list, g_strdup (uri));
     g_free (uri);
+}
+
+static gboolean
+on_treeview_key_press (GtkWidget *widget, GdkEventKey *event,
+                GtkTreeSelection *selection) {
+    // This is only here to prevent system beep.
+    // The actual handler is on key release.
+    switch (event->keyval) {
+    case GDK_KEY_Right:
+    case GDK_KEY_Left:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 static gboolean

@@ -17,7 +17,7 @@ To build the plugin from source, you'll need the [DeaDBeeF](http://deadbeef.sour
 Then just simply run
 ``` bash
 ./autogen.sh
-./configure [--enable-gtk3]
+./configure [--disable-gtk2|--disable-gtk3]
 make
 
 ./userinstall.sh #Installs the plugin to $HOME/.local/lib/deadbeef/

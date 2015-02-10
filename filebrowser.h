@@ -133,6 +133,9 @@ static void         on_menu_copy_uri(GtkMenuItem *menuitem, GList *uri_list);
 static void         on_menu_show_hidden_files(GtkMenuItem *menuitem, gpointer *user_data);
 static void         on_menu_use_filter(GtkMenuItem *menuitem, gpointer *user_data);
 
+static void         view_popup_menu (GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *column,
+                            GdkEventButton *event, GtkTreeSelection *selection);
+
 static gboolean     on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                             GtkTreeSelection *selection);
 static gboolean     on_treeview_key_press (GtkWidget *widget, GdkEventKey *event,
@@ -141,6 +144,7 @@ static gboolean     on_treeview_key_release (GtkWidget *widget, GdkEventKey *eve
                             GtkTreeSelection *selection);
 static void         on_treeview_row_activated (GtkWidget *widget, GtkTreePath *path,
                             GtkTreeViewColumn *column, GtkTreeSelection *selection);
+static gboolean     on_treeview_popup_menu (GtkWidget *widget, GtkTreeSelection *selection);
 static void         on_treeview_row_expanded (GtkWidget *widget, GtkTreeIter *iter,
                         GtkTreePath *path, gpointer user_data);
 static void         on_treeview_row_collapsed (GtkWidget *widget, GtkTreeIter *iter,

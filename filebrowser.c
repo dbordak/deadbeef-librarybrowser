@@ -825,6 +825,7 @@ create_sidebar (void)
     g_signal_connect (treeview, "button-press-event", G_CALLBACK (on_treeview_mouseclick_press), selection);
     g_signal_connect (treeview, "key-press-event",    G_CALLBACK (on_treeview_key_press),        selection);
     g_signal_connect (treeview, "key-release-event",  G_CALLBACK (on_treeview_key_release),      selection);
+    g_signal_connect (treeview, "popup-menu",         G_CALLBACK (on_treeview_popup_menu),       selection);
     g_signal_connect (treeview, "row-activated",      G_CALLBACK (on_treeview_row_activated),    selection);
     g_signal_connect (treeview, "row-collapsed",      G_CALLBACK (on_treeview_row_collapsed),    NULL);
     g_signal_connect (treeview, "row-expanded",       G_CALLBACK (on_treeview_row_expanded),     NULL);
@@ -1494,6 +1495,34 @@ on_treeview_key_release (GtkWidget *widget, GdkEventKey *event,
     return FALSE;
 }
 
+static void
+view_popup_menu (GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *column,
+                 GdkEventButton *event, GtkTreeSelection *selection)
+{
+    if (path)
+    {
+        gint selected_rows = gtk_tree_selection_count_selected_rows (selection);
+        gboolean is_selected = path ? gtk_tree_selection_path_is_selected (selection, path) : FALSE;
+        if (selected_rows < 1)
+            gtk_tree_selection_select_path (selection, path);
+        if (! is_selected)
+            gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
+    }
+
+    GList *rows, *uri_list;
+    uri_list = g_list_alloc ();
+    rows = gtk_tree_selection_get_selected_rows (selection, NULL);
+    g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
+    g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
+    g_list_free (rows);
+
+    gtk_menu_popup (GTK_MENU (create_popup_menu (path, "", uri_list)),
+                    NULL, NULL, NULL, NULL,
+                    (event != NULL) ? event->button : 0,
+                    (event != NULL) ? event->time : 0);
+}
+
+
 static gboolean
 on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
                 GtkTreeSelection *selection)
@@ -1544,28 +1573,23 @@ on_treeview_mouseclick_press (GtkWidget *widget, GdkEventButton *event,
     {
         if (event->type == GDK_BUTTON_PRESS)
         {
-            if (path)
-            {
-                if (selected_rows < 1)
-                    gtk_tree_selection_select_path (selection, path);
-                if (! is_selected)
-                    gtk_tree_view_set_cursor (GTK_TREE_VIEW (treeview), path, column, FALSE);
-            }
-
-            GList *rows, *uri_list;
-            uri_list = g_list_alloc ();
-            rows = gtk_tree_selection_get_selected_rows (selection, NULL);
-            g_list_foreach (rows, (GFunc)get_uris_from_selection, uri_list);
-            g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
-            g_list_free (rows);
-
-            gtk_menu_popup (GTK_MENU (create_popup_menu (path, "", uri_list)),
-                            NULL, NULL, NULL, NULL, event->button, event->time);
+            view_popup_menu(widget, path, column, event, selection);
+            return TRUE;
         }
-        return TRUE;
     }
 
     return FALSE;
+}
+
+static gboolean
+on_treeview_popup_menu (GtkWidget *widget, GtkTreeSelection *selection)
+{
+    GtkTreePath         *path;
+    GtkTreeViewColumn   *column;
+    gtk_tree_view_get_cursor (GTK_TREE_VIEW (treeview), &path, &column);
+
+    view_popup_menu(widget, path, column, NULL, selection);
+    return TRUE;
 }
 
 static void
